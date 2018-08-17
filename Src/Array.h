@@ -31,7 +31,6 @@ DAMAGE.
 
 #include <vector>
 
-#define ARRAY_DEBUG 0
 #ifdef _WIN64
 #define ASSERT( x ) { if( !( x ) ) __debugbreak(); }
 #else // !_WIN64
@@ -43,7 +42,7 @@ DAMAGE.
 #endif // _WIN64
 
 // Code from http://stackoverflow.com
-void* aligned_malloc( size_t size , size_t align )
+inline void* aligned_malloc( size_t size , size_t align )
 {
 	// Align enough for the data, the alignment padding, and room to store a pointer to the actual start of the memory
 	void*  mem = malloc( size + align + sizeof( void* ) );
@@ -55,10 +54,12 @@ void* aligned_malloc( size_t size , size_t align )
 	( ( void** ) amem )[-1] = mem;
 	return amem;
 }
-void aligned_free( void* mem ) { free( ( ( void** )mem )[-1] ); }
+inline void aligned_free( void* mem ) { free( ( ( void** )mem )[-1] ); }
 
-#if ARRAY_DEBUG
+#ifdef ARRAY_DEBUG
+#ifdef SHOW_WARNINGS
 #pragma message ( "[WARNING] Array debugging is enabled" )
+#endif // SHOW_WARNINGS
 #include "Array.inl"
 #define      Pointer( ... )      Array< __VA_ARGS__ >
 #define ConstPointer( ... ) ConstArray< __VA_ARGS__ >
@@ -79,6 +80,11 @@ template< class C >      Array< C > GetPointer(       C& c ) { return      Array
 template< class C > ConstArray< C > GetPointer( const C& c ) { return ConstArray< C >::FromPointer( &c , 1 ); }
 template< class C >      Array< C > GetPointer(       std::vector< C >& v ){ return      Array< C >::FromPointer( &v[0] , v.size() ); }
 template< class C > ConstArray< C > GetPointer( const std::vector< C >& v ){ return ConstArray< C >::FromPointer( &v[0] , v.size() ); }
+
+template< class C >      Array< C > GetPointer(       C* c , int sz ) { return      Array< C >::FromPointer( c , sz ); }
+template< class C > ConstArray< C > GetPointer( const C* c , int sz ) { return ConstArray< C >::FromPointer( c , sz ); }
+template< class C >      Array< C > GetPointer(       C* c , int start , int end ) { return      Array< C >::FromPointer( c , start , end ); }
+template< class C > ConstArray< C > GetPointer( const C* c , int start , int end ) { return ConstArray< C >::FromPointer( c , start , end ); }
 
 #else // !ARRAY_DEBUG
 #define      Pointer( ... )       __VA_ARGS__*
@@ -102,5 +108,10 @@ template< class C >       C* GetPointer(       C& c ){ return &c; }
 template< class C > const C* GetPointer( const C& c ){ return &c; }
 template< class C >       C* GetPointer(       std::vector< C >& v ){ return &v[0]; }
 template< class C > const C* GetPointer( const std::vector< C >& v ){ return &v[0]; }
+
+template< class C >       C* GetPointer(       C* c , int sz ) { return c; }
+template< class C > const C* GetPointer( const C* c , int sz ) { return c; }
+template< class C >       C* GetPointer(       C* c , int start , int end ) { return c; }
+template< class C > const C* GetPointer( const C* c , int start , int end ) { return c; }
 #endif // ARRAY_DEBUG
 #endif // ARRAY_INCLUDED
